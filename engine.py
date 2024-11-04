@@ -12,6 +12,7 @@ class Engine:
     def __init__(self, args):
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
         device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        print("Device:", device)
         os.makedirs('ckp', exist_ok=True)
 
         torch.manual_seed(args.seed)
@@ -101,13 +102,17 @@ class Engine:
             self.optimizer.zero_grad()
             input_ids = batch['input_ids'].to(self.device)
             attention_mask = batch['attention_mask'].to(self.device)
-            labels = batch['labels'].to(self.device)
+            labels = batch['labels'].to(self.device)  # here
+            # labels = labels.type(torch.FloatTensor)
+            # labels = labels.to(self.device)
             chunk_lens = batch['chunk_lens']
             speaker_ids = batch['speaker_ids'].to(self.device)
             topic_labels = batch['topic_labels'].to(self.device)
             outputs = self.model(input_ids, attention_mask, chunk_lens, speaker_ids,
                                  topic_labels)
             labels = labels.reshape(-1)
+            print(f"outputs shape: {outputs.shape}, type: {outputs.dtype}")
+            print(f"labels shape: {labels.shape}, type: {labels.dtype}")
             loss_act = self.criterion(outputs, labels)
             loss = loss_act
             loss.backward()
